@@ -1,10 +1,10 @@
 {
-	"id": "obsidian-sample-plugin",
-	"name": "Sample Plugin",
+	"id": "beeminder-word-count-plugin",
+	"name": "Beeminder Word Count Plugin",
 	"version": "1.0.1",
 	"minAppVersion": "0.9.12",
-	"description": "This is a sample plugin for Obsidian. This plugin demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md/about",
+	"description": "This lets you post word counts directly from obsidian file to Beeminder.",
+	"author": "Yuta Miyama",
+	"authorUrl": "https://twitter.com/kenzan100",
 	"isDesktopOnly": false
 }
