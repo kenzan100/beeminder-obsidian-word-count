@@ -5,6 +5,10 @@ This is a small plugin for Obsidian -> Beeminder word count integration.
 - Beeminder https://www.beeminder.com
 
 ## What it does
+
+![4135afb222d7d94892f57f29fd17dbb5](https://user-images.githubusercontent.com/570263/116797588-4518fc80-aab5-11eb-9f9f-12efb5260307.gif)
+
+
 1. Once installed, it will register command called "Send word count to Beeminder".
 2. When command is selected, it'll count the words in current editing file. **It will only count the actively selected area.***
 3. It then sends the value to the Beeminder endpoint.
