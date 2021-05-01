@@ -4,20 +4,24 @@ This is a small plugin for Obsidian -> Beeminder word count integration.
 - Obsidian https://obsidian.md
 - Beeminder https://www.beeminder.com
 
-1. Once installed, it will register command "Send word count to Beeminder".
-2. When command is selected, it'll count the words in current editing file.
+## What it does
+1. Once installed, it will register command called "Send word count to Beeminder".
+2. When command is selected, it'll count the words in current editing file. **It will only count the actively selected area.***
 3. It then sends the value to the Beeminder endpoint.
+
+*For my use-case, I do not want to over report the word counts when I edit the same file over multiple days.
 
 ## Setup
 
-Installing the plugin will appear "Setting" section.
-There, please enter user name, goal name, and auth_token specified by http://api.beeminder.com/#personal-authentication-token.
-This will work with personal auth_token.
+- Installing the plugin will register new setting in Plugin Options tab.
+- Go to that tab, enter following 3 values:
+  - user name for your Beeminder account
+  - goal name to which word count will be posted to, and 
+  - auth_token specified by http://api.beeminder.com/#personal-authentication-token.
+
 
 ### Releasing new releases
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
 - Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
 - Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments.
 - Publish the release.
