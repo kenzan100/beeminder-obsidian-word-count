@@ -5,6 +5,7 @@ interface MyPluginSettings {
 	goalName: string,
 	authToken: string,
 	currentWordCnt: number,
+	editingFileTitle: string,
 }
 
 const DEFAULT_SETTINGS: MyPluginSettings = {
@@ -12,6 +13,7 @@ const DEFAULT_SETTINGS: MyPluginSettings = {
 	goalName: "weight",
 	authToken: "",
 	currentWordCnt: 0,
+	editingFileTitle: "",
 }
 
 // Count Stats
@@ -69,13 +71,8 @@ export default class MyPlugin extends Plugin {
 				let editor = activeLeaf.view.editor;
 				if (editor.somethingSelected()) {
 					let content: string = editor.getSelection();
+					this.settings.editingFileTitle = activeLeaf.getDisplayText();
 					this.settings.currentWordCnt = getWordCount(content);
-				} else if (
-					activeLeaf.view.file.extension === "md"
-				) {
-					let cnt = getWordCount(activeLeaf.view.data);
-					console.log(cnt);
-					this.settings.currentWordCnt = cnt;
 				}
 			}, 500)
 		);
@@ -107,7 +104,7 @@ class SampleModal extends Modal {
 	async onOpen() {
 		let {contentEl} = this;
 		await this.createDataPoint();
-		contentEl.setText('Data point sent to Beeminder. Good work!');
+		contentEl.setText(`${this.setting.currentWordCnt} word count sent to Beeminder. Good work!`);
 	}
 
 	onClose() {
@@ -119,10 +116,11 @@ class SampleModal extends Modal {
 	async createDataPoint() {
 		const url = `https://www.beeminder.com/api/v1/users/${this.setting.userName}/goals/${this.setting.goalName}/datapoints.json`;
 
+		let now = new Date();
 		let formData = new FormData();
 		formData.append('auth_token', this.setting.authToken);
-		formData.append('value', '10');
-		formData.append('comment', new Date().toISOString());
+		formData.append('value', `${this.setting.currentWordCnt}`);
+		formData.append('comment', `${now.toISOString()} - ${this.setting.editingFileTitle}`);
 
 		const result = await fetch(url, {
 			method: "POST",
@@ -148,7 +146,7 @@ class SampleSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl('h2', {text: 'Settings for the plugin.'});
+		containerEl.createEl('h2', {text: 'Settings for the Beeminder word count plugin'});
 
 		this.createSetting('Beeminder auth_token', (val: string) => this.plugin.settings.authToken = val, true);
 		this.createSetting('Beeminder user name', (val: string) => this.plugin.settings.userName = val, false);
