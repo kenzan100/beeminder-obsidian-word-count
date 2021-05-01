@@ -1,11 +1,15 @@
 import { App, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 
 interface MyPluginSettings {
-	mySetting: string;
+	userName: string,
+	goalName: string,
+	authToken: string,
 }
 
 const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
+	userName: "Alice",
+	goalName: "weight",
+	authToken: "",
 }
 
 export default class MyPlugin extends Plugin {
@@ -16,15 +20,9 @@ export default class MyPlugin extends Plugin {
 
 		await this.loadSettings();
 
-		this.addRibbonIcon('dice', 'Sample Plugin', () => {
-			new Notice('This is a notice!');
-		});
-
-		this.addStatusBarItem().setText('Status Bar Text');
-
 		this.addCommand({
-			id: 'open-sample-modal',
-			name: 'Open Sample Modal',
+			id: 'create-word-count-datapoint',
+			name: 'Send word count to Beeminder',
 			// callback: () => {
 			// 	console.log('Simple Callback');
 			// },
@@ -32,7 +30,7 @@ export default class MyPlugin extends Plugin {
 				let leaf = this.app.workspace.activeLeaf;
 				if (leaf) {
 					if (!checking) {
-						new SampleModal(this.app).open();
+						new SampleModal(this.app, this.settings).open();
 					}
 					return true;
 				}
@@ -45,12 +43,6 @@ export default class MyPlugin extends Plugin {
 		this.registerCodeMirror((cm: CodeMirror.Editor) => {
 			console.log('codemirror', cm);
 		});
-
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			console.log('click', evt);
-		});
-
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
 	}
 
 	onunload() {
@@ -67,18 +59,40 @@ export default class MyPlugin extends Plugin {
 }
 
 class SampleModal extends Modal {
-	constructor(app: App) {
+	setting: MyPluginSettings;
+
+	constructor(app: App, setting: MyPluginSettings) {
 		super(app);
+		this.setting = setting;
 	}
 
-	onOpen() {
+	async onOpen() {
 		let {contentEl} = this;
-		contentEl.setText('Woah!');
+		await this.createDataPoint();
+		contentEl.setText('Data point sent to Beeminder. Good work!');
 	}
 
 	onClose() {
 		let {contentEl} = this;
 		contentEl.empty();
+	}
+
+	async createDataPoint() {
+		const url = `https://www.beeminder.com/api/v1/users/${this.setting.userName}/goals/${this.setting.goalName}/datapoints.json`;
+
+		let formData = new FormData();
+		formData.append('auth_token', this.setting.authToken);
+		formData.append('value', '10');
+		formData.append('comment', new Date().toISOString());
+
+		const result = await fetch(url, {
+			method: "POST",
+			body: formData,
+		});
+
+		if (!result.ok) {
+			new Notice("Failed to create datapoint")
+		}
 	}
 }
 
@@ -97,16 +111,20 @@ class SampleSettingTab extends PluginSettingTab {
 
 		containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
 
-		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
+		this.createSetting('Beeminder auth_token', (val: string) => this.plugin.settings.authToken = val, true);
+		this.createSetting('Beeminder user name', (val: string) => this.plugin.settings.userName = val, false);
+		this.createSetting('Beeminder goal name', (val: string) => this.plugin.settings.goalName = val, false);
+	}
+
+	createSetting(name: string, pluginFieldSetter: Function, secret: Boolean) {
+		const callback = async (val: string) => {
+			pluginFieldSetter(val);
+			await this.plugin.saveSettings();
+		}
+		new Setting(this.containerEl)
+			.setName(name)
 			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue('')
-				.onChange(async (value) => {
-					console.log('Secret: ' + value);
-					this.plugin.settings.mySetting = value;
-					await this.plugin.saveSettings();
-				}));
+				.setValue('').onChange(callback)
+			);
 	}
 }
