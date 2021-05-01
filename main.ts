@@ -39,10 +39,6 @@ export default class MyPlugin extends Plugin {
 		});
 
 		this.addSettingTab(new SampleSettingTab(this.app, this));
-
-		this.registerCodeMirror((cm: CodeMirror.Editor) => {
-			console.log('codemirror', cm);
-		});
 	}
 
 	onunload() {
@@ -109,7 +105,7 @@ class SampleSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
+		containerEl.createEl('h2', {text: 'Settings for the plugin.'});
 
 		this.createSetting('Beeminder auth_token', (val: string) => this.plugin.settings.authToken = val, true);
 		this.createSetting('Beeminder user name', (val: string) => this.plugin.settings.userName = val, false);
@@ -124,7 +120,8 @@ class SampleSettingTab extends PluginSettingTab {
 		new Setting(this.containerEl)
 			.setName(name)
 			.addText(text => text
-				.setValue('').onChange(callback)
+				.setValue('')
+				.onChange(callback)
 			);
 	}
 }
