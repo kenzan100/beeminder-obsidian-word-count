@@ -1,4 +1,4 @@
-## Obsidian Sample Plugin
+## Obsidian Plugin - Beeminder Word Count
 
 This is a small plugin for Obsidian -> Beeminder word count integration.
 - Obsidian https://obsidian.md
@@ -24,17 +24,13 @@ This is a small plugin for Obsidian -> Beeminder word count integration.
   - auth_token specified by http://api.beeminder.com/#personal-authentication-token.
 
 
+## Upkeep of the plugin
+
 ### Releasing new releases
 
 - Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
 - Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments.
 - Publish the release.
-
-### Adding your plugin to the community plugin list
-
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
 
 ### Manually installing the plugin
 
