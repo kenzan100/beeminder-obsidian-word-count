@@ -1,6 +1,6 @@
-import { TFile, MarkdownView, App, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { MarkdownView, App, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 
-interface MyPluginSettings {
+interface BeeminderWordCountSettings {
 	userName: string,
 	goalName: string,
 	authToken: string,
@@ -8,7 +8,7 @@ interface MyPluginSettings {
 	editingFileTitle: string,
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
+const DEFAULT_SETTINGS: BeeminderWordCountSettings = {
 	userName: "Alice",
 	goalName: "weight",
 	authToken: "",
@@ -34,8 +34,8 @@ function getWordCount(text: string): number {
 	return (text.match(pattern) || []).length;
 }
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class BeeminderWordCountPlugin extends Plugin {
+	settings: BeeminderWordCountSettings;
 
 	async onload() {
 		console.log('loading plugin');
@@ -45,14 +45,11 @@ export default class MyPlugin extends Plugin {
 		this.addCommand({
 			id: 'create-word-count-datapoint',
 			name: 'Send word count to Beeminder',
-			// callback: () => {
-			// 	console.log('Simple Callback');
-			// },
 			checkCallback: (checking: boolean) => {
 				let leaf = this.app.workspace.activeLeaf;
 				if (leaf) {
 					if (!checking) {
-						new SampleModal(this.app, this.settings).open();
+						new BeeminderResponseModal(this.app, this.settings).open();
 					}
 					return true;
 				}
@@ -63,12 +60,13 @@ export default class MyPlugin extends Plugin {
 		this.registerInterval(
 			window.setInterval(async () => {
 				let activeLeaf = this.app.workspace.activeLeaf;
+				let markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
 
-				if (!activeLeaf || !(activeLeaf.view instanceof MarkdownView)) {
+				if (!markdownView) {
 					return;
 				}
 
-				let editor = activeLeaf.view.editor;
+				let editor = markdownView.editor;
 				if (editor.somethingSelected()) {
 					let content: string = editor.getSelection();
 					this.settings.editingFileTitle = activeLeaf.getDisplayText();
@@ -77,7 +75,7 @@ export default class MyPlugin extends Plugin {
 			}, 500)
 		);
 
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+		this.addSettingTab(new BeeminderWordCountSettingTab(this.app, this));
 	}
 
 	onunload() {
@@ -93,18 +91,22 @@ export default class MyPlugin extends Plugin {
 	}
 }
 
-class SampleModal extends Modal {
-	setting: MyPluginSettings;
+class BeeminderResponseModal extends Modal {
+	setting: BeeminderWordCountSettings;
 
-	constructor(app: App, setting: MyPluginSettings) {
+	constructor(app: App, setting: BeeminderWordCountSettings) {
 		super(app);
 		this.setting = setting;
 	}
 
 	async onOpen() {
 		let {contentEl} = this;
-		await this.createDataPoint();
-		contentEl.setText(`${this.setting.currentWordCnt} word count sent to Beeminder. Good work!`);
+		const result = await this.createDataPoint();
+		if (result.success) {
+			contentEl.setText(`${this.setting.currentWordCnt} word count sent to Beeminder. Good work!`);
+		} else {
+			contentEl.setText(`Failed to create datapoint. ${result.body}`);
+		}
 	}
 
 	onClose() {
@@ -122,21 +124,23 @@ class SampleModal extends Modal {
 		formData.append('value', `${this.setting.currentWordCnt}`);
 		formData.append('comment', `${now.toISOString()} - ${this.setting.editingFileTitle}`);
 
-		const result = await fetch(url, {
+		const response = await fetch(url, {
 			method: "POST",
 			body: formData,
 		});
+		const text = await response.text();
 
-		if (!result.ok) {
-			new Notice("Failed to create datapoint")
+		return {
+			success: response.ok,
+			body: text,
 		}
 	}
 }
 
-class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+class BeeminderWordCountSettingTab extends PluginSettingTab {
+	plugin: BeeminderWordCountPlugin;
 
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: BeeminderWordCountPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
