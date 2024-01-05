@@ -7,14 +7,16 @@ interface BeeminderWordCountSettings {
 	authToken: string,
 	currentWordCnt: number,
 	editingFileTitle: string,
+    includePageTitle: boolean,
 }
 
 const DEFAULT_SETTINGS: BeeminderWordCountSettings = {
-	userName: "Alice",
-	goalName: "weight",
+	userName: "",
+	goalName: "",
 	authToken: "",
 	currentWordCnt: 0,
 	editingFileTitle: "",
+    includePageTitle: true,
 }
 
 export default class BeeminderWordCountPlugin extends Plugin {
@@ -105,7 +107,12 @@ class BeeminderResponseModal extends Modal {
 		let formData = new FormData();
 		formData.append('auth_token', this.setting.authToken);
 		formData.append('value', `${this.setting.currentWordCnt}`);
-		formData.append('comment', `${now.toISOString()} - ${this.setting.editingFileTitle}`);
+
+        if (this.setting.includePageTitle) {
+            formData.append('comment', `${now.toISOString()} - ${this.setting.editingFileTitle}`);
+        } else {
+            formData.append('comment', `${now.toISOString()}`);
+        }
 
 		const response = await fetch(url, {
 			method: "POST",
@@ -135,21 +142,46 @@ class BeeminderWordCountSettingTab extends PluginSettingTab {
 
 		containerEl.createEl('h2', {text: 'Settings for the Beeminder word count plugin'});
 
-		this.createSetting('Beeminder auth_token', (val: string) => this.plugin.settings.authToken = val, true);
-		this.createSetting('Beeminder user name', (val: string) => this.plugin.settings.userName = val, false);
-		this.createSetting('Beeminder goal name', (val: string) => this.plugin.settings.goalName = val, false);
+		this.createTextSetting('Beeminder auth_token', this.plugin.settings.authToken, (val: string) => this.plugin.settings.authToken = val, true);
+		this.createTextSetting('Beeminder user name', this.plugin.settings.userName, (val: string) => this.plugin.settings.userName = val, false);
+		this.createTextSetting('Beeminder goal name', this.plugin.settings.goalName, (val: string) => this.plugin.settings.goalName = val, false);
+        
+        this.createCheckboxSetting('Include page title as comment', this.plugin.settings.includePageTitle, (val: boolean) => this.plugin.settings.includePageTitle = val)
 	}
 
-	createSetting(name: string, pluginFieldSetter: Function, secret: Boolean) {
+	createTextSetting(name: string, initial : string, pluginFieldSetter: Function, secret: Boolean) {
 		const callback = async (val: string) => {
 			pluginFieldSetter(val);
 			await this.plugin.saveSettings();
 		}
-		new Setting(this.containerEl)
-			.setName(name)
-			.addText(text => text
-				.setValue('')
-				.onChange(callback)
-			);
+
+        if (secret) {
+    		return new Setting(this.containerEl)
+    			.setName(name)
+    			.addText(text => text
+    				.setPlaceholder("auth_token")
+    				.onChange(callback)
+    			);
+        } else {
+            return new Setting(this.containerEl)
+    			.setName(name)
+    			.addText(text => text
+    				.setValue(initial)
+    				.onChange(callback)
+    			);
+        }
 	}
+
+    createCheckboxSetting(name: string, initial: boolean, pluginFieldSetter: Function) {
+        const callback = async (val: boolean) => {
+            pluginFieldSetter(val)
+            await this.plugin.saveSettings()
+        }
+        new Setting(this.containerEl)
+            .setName(name)
+            .addToggle(val => val
+                .setValue(initial)
+                .onChange(callback)
+            )
+    }
 }
